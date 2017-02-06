@@ -1,31 +1,55 @@
 const path = require('path')
 const prettyTime = require('pretty-hrtime')
 const pipe = require(path.join(__dirname, process.env.PROMISED_PIPE_LIB_FILE || 'index.js'))
+const time = 2000
 
-const PIPE_SIZE = 1e3
-const CREATION_LOOP_SIZE = 1e4 * 2
-const EXECUTION_LOOP_SIZE = 1e3
-
-const inc = x => x + 1
-const fns = Array(PIPE_SIZE).fill(inc)
-const formatTime = x => prettyTime(x, { precise: true })
-var t1
-
-// creation
-t1 = process.hrtime()
-
-for (var i = 0; i < CREATION_LOOP_SIZE; i++) {
-    pipe.apply(null, fns)
+let begin = Date.now()
+let counter = 0
+let invalidateOpt
+const ff = () => invalidateOpt++
+const solved = Promise.resolve(invalidateOpt)
+const qq = () => solved
+while ((Date.now() - begin) < time) {
+    pipe(ff)
+    pipe(ff, qq)
+    pipe(qq, ff)
+    pipe(ff, ff)
+    pipe(qq, ff, ff)
+    pipe(ff, qq, ff)
+    pipe(ff, ff, qq)
+    pipe(ff, ff, qq, ff)
+    pipe(ff, ff, qq, ff)
+    pipe(ff, ff, qq, ff, ff, ff)
+    counter++
 }
 
-console.log('creation:', formatTime(process.hrtime(t1)))
+console.log((counter / time) + ' build per ms')
+counter = 0
 
-// execution
-t1 = process.hrtime()
+const fn1 = pipe(ff)
+const fn2 = pipe(ff, qq)
+const fn3 = pipe(qq, ff)
+const fn4 = pipe(ff, ff)
+const fn5 = pipe(qq, ff, ff)
+const fn6 = pipe(ff, qq, ff)
+const fn7 = pipe(ff, ff, qq)
+const fn8 = pipe(ff, ff, qq, ff)
+const fn9 = pipe(ff, ff, qq, ff)
+const fn0 = pipe(ff, ff, qq, ff, ff, ff)
 
-const fn = pipe.apply(null, fns)
+begin = Date.now()
+while ((Date.now() - begin) < time) {
+    fn1()
+    fn2()
+    fn3()
+    fn4()
+    fn5()
+    fn6()
+    fn7()
+    fn8()
+    fn9()
+    fn0()
+    counter++
+}
 
-Array(EXECUTION_LOOP_SIZE).fill(1).reduce(acc => acc.then(fn), Promise.resolve(1)).then(result => {
-    console.log('execution:', formatTime(process.hrtime(t1)), 'result', result)
-})
-
+console.log((counter / time) + ' exec per ms')
